@@ -3,8 +3,13 @@
     User detail
 {% endblock %}
 {% block body %}
-    <div>
-        <a href="{{ url_for('users_app.users_list') }}">Back to users list</a>
-    </div>
-    <h1>{{ user_name }}</h1>
+     {% if current_user.is_authenticated %}
+        <div>
+            <a href="{{ url_for('users_app.users_list') }}">Back to users list</a>
+        </div>
+        <h1>{{ user.username }}</h1>
+    {% else %}
+        <h2>You can`t see it. Login</h2>
+        <a href="{{ url_for('auth_app.login') }}">Login</a>
+    {% endif %}
 {% endblock %}
