@@ -1,9 +1,9 @@
 from flask import Blueprint, render_template, request, flash, redirect, url_for
-from flask_login import LoginManager, login_user, logout_user, login_required
+from flask_login import LoginManager, login_user, logout_user, login_required, current_user
 from werkzeug.exceptions import NotFound
-from werkzeug.security import check_password_hash
+from werkzeug.security import check_password_hash, generate_password_hash
 
-
+from blog.forms.user import LoginForm
 
 # from blog.models import User
 
@@ -26,24 +26,32 @@ def unauthorized():
 
 @auth_app.route('/login', methods=['POST', 'GET'])
 def login():
+
+    if current_user.is_authenticated:
+        return redirect(url_for('users_app.profile', pk=current_user.id))
+
+    errors = None
+    form = LoginForm(request.form)
     if request.method == 'GET':
-        return render_template('auth/login.html')
+        flash('Need a method POST')
+        return render_template('auth/login.html', form=form, errors=errors)
 
-    email = request.form.get('email')
-    password = request.form.get('password')
-
+    email = form.email.data
+    password = generate_password_hash(form.password.data)
     if not email:
-        return render_template('auth/login.html', error='email not passed')
+        flash("email not passed")
+        return render_template('auth/login.html', form=form)
 
     from blog.models import User
-    user = User.query.filter_by(email=email).one_or_none()
+    _user = User.query.filter_by(email=form.email.data).one_or_none()
 
-    # if not user or check_password_hash(user.password, password):
-    if not user:
+    if not _user or check_password_hash(_user.password, password):
+    # if not _user:
         flash('Check your login details')
-        return redirect(url_for('.login'))
-    login_user(user)
-    return redirect(url_for('users_app.profile', pk=user.id))
+        return redirect(url_for('.login', form=form))
+
+    login_user(_user)
+    return redirect(url_for('users_app.profile', pk=_user.id))
 
 
 @auth_app.route('/logout')
