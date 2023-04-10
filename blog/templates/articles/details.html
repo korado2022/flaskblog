@@ -8,9 +8,13 @@
             <a href="{{ url_for('articles_app.articles_list') }}">Back to articles list</a>
         </div>
         <h2>{{ article.title }}</h2>
-        <h3>{{ article.author.name }}</h3>
+<!--        <h3>{{ article.author.name }}</h3>-->
         <br><br>
         <p>{{ article.text }}</p>
+        <div>Author: {{ article.author.user.first_name }} {{ article.author.user.last_name }} ({{ article.author.id }})</div>
+        <div>Create at: {{ article.create_at }}</div>
+        <div>Update at: {{ article.update_at }}</div>
+
     {% else %}
         <h2>You can`t see it. Login</h2>
         <a href="{{ url_for('auth_app.login') }}">Login</a>
