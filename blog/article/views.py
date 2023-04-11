@@ -2,11 +2,12 @@ from sqlite3 import IntegrityError
 
 from flask import Blueprint, render_template, request, current_app, redirect, url_for
 from flask_login import login_required, current_user
+from sqlalchemy.orm import joinedload
 from werkzeug.exceptions import NotFound
 
 from blog.extensions import db
 from blog.forms.article import CreateArticleForm
-from blog.models import Article, Author
+from blog.models import Article, Author, Tag
 
 articles_app = Blueprint("articles_app", __name__, url_prefix='/articles', static_folder='../static')
 
@@ -111,44 +112,58 @@ articles_app = Blueprint("articles_app", __name__, url_prefix='/articles', stati
 #
 
 @articles_app.route("/", methods=["GET"])
+@login_required
 def articles_list():
     articles = Article.query.all()
     return render_template("articles/list.html", articles=articles)
 
-@articles_app.route("/", methods=["POST"])
+
+@articles_app.route("/create", methods=["GET"])
+@login_required
+def create_article_form():
+    form = CreateArticleForm(request.form)
+    form.tags.choices = [(tag.id, tag.name) for tag in Tag.query.order_by("name")]
+    return render_template("articles/create.html", form=form)
+
+
+
+@articles_app.route("/create", methods=["POST"])
 @login_required
 def create_article():
-    errors = None
+    errors = []
     form = CreateArticleForm(request.form)
+    form.tags.choices = [(tag.id, tag.name) for tag in Tag.query.order_by("name")]
     if form.validate_on_submit():
         _article = Article(title=form.title.data.strip(), text=form.text.data)
-        db.session.add(_article)
+        # db.session.add(_article)
 
-        if current_user.author:
-            _article.author = current_user.author
-        else:
-            author = Author(user_id = current_user.id)
+        if request.method == "POST" and form.validate_on_submit():
+            if form.tags.data:
+                selected_tags = Tag.query.filter(Tag.id.in_(form.tags.data))
+                for tag in selected_tags:
+                    _article.tags.append(tag)
+
+
+        if not current_user.author:
+            author = Author(user_id=current_user.id)
             db.session.add(author)
-            db.session.flush()
-            _article.author_id = current_user.id
-
-        try:
             db.session.commit()
-        except IntegrityError:
-            current_app.logger.exception("Could not create a new article!")
-            error = "Could not create article!"
-        else:
-            return redirect(url_for("articles_app.details", article_id=_article.id))
+
+        _article.author_id = current_user.author.id
+
+        db.session.add(_article)
+        db.session.commit()
+        return redirect(url_for("articles_app.details", article_id=_article.id))
 
 
-    return render_template('articles/create.html', form=form, errors=errors)
+    return render_template('articles/create.html', form=form)
 
 
 @articles_app.route('/<int:article_id>')
 @login_required
 def details(article_id: int):
 
-    _article = Article.query.filter_by(id=article_id).one_or_none()
+    _article = Article.query.filter_by(id=article_id).options(joinedload(Article.tags)).one_or_none()
     if _article is None:
         raise NotFound(f"Article #{article_id} doesn't exist!")
 

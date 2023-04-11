@@ -1,4 +1,6 @@
 {% extends 'base.html' %}
+{% from 'macro/formhelpers.html' import render_field %}
+
 {% block title %}
     Create article
 {% endblock %}
@@ -15,8 +17,8 @@
 
     <form method="POST">
         {{ form.csrf_token }}
-        {% for field in ['title', 'text'] %}
-            {{{ render_field(form[field]) }}
+        {% for field in ['title', 'text', 'tags'] %}
+            {{ render_field(form[field]) }}
         {% endfor %}
 
        <div>
