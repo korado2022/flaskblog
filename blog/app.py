@@ -6,7 +6,7 @@ from flask import Flask
 # from blog.auth.views import auth_app, login_manager
 # from blog.user.views import users_app
 from blog import commands
-from blog.extensions import db, login_manager, migrate, csrf
+from blog.extensions import db, login_manager, migrate, csrf, admin
 from blog.models import User
 
 # db = SQLAlchemy()
@@ -36,6 +36,7 @@ def register_extensions(app):
     db.init_app(app)
     migrate.init_app(app, db, compare_type=True)
     csrf.init_app(app)
+    admin.init_app(app)
 
     login_manager.login_view = 'auth_app.login'
     login_manager.init_app(app)
@@ -53,11 +54,16 @@ def register_blueprints(app: Flask):
     from blog.user.views import users_app
     from blog.article.views import articles_app
     from blog.author.views import authors_app
+    from blog.admin.views import admin_app
+    # from blog import admin
 
     app.register_blueprint(users_app)
     app.register_blueprint(auth_app)
     app.register_blueprint(articles_app)
     app.register_blueprint(authors_app)
+    app.register_blueprint(admin_app)
+    # admin.register_views()
+
 def register_commands(app: Flask):
     app.cli.add_command(commands.init_db)
     app.cli.add_command(commands.create_init_user)

@@ -1,4 +1,4 @@
-from blog.app import create_app, db
+from blog.app import create_app
 # from werkzeug.security import generate_password_hash
 
 # from blog.models import User
