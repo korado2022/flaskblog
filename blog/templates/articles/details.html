@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 {% block title %}
-    Article detail
+    {{ article.title }}
 {% endblock %}
 {% block body %}
      {% if current_user.is_authenticated %}
@@ -10,10 +10,25 @@
         <h2>{{ article.title }}</h2>
 <!--        <h3>{{ article.author.name }}</h3>-->
         <br><br>
-        <p>{{ article.text }}</p>
-        <div>Author: {{ article.author.user.first_name }} {{ article.author.user.last_name }} ({{ article.author.id }})</div>
-        <div>Create at: {{ article.create_at }}</div>
-        <div>Update at: {{ article.update_at }}</div>
+        <div class="row">
+            <div class="col-md-12">{{ article.text }}</div>
+        </div>
+        <div class="row">
+            <div class="col-6">
+                <div><small class="text-muted">Author: {{ article.author.user.first_name }} {{ article.author.user.last_name }} ({{ article.author.id }})</small></div>
+                <div><small class="text-muted">Created at: {{ article.created_at.strftime('%d-%m-%Y %H:%M:%S') }}</small></div>
+                <div><small class="text-muted">Updated at: {{ article.updated_at.strftime('%d-%m-%Y %H:%M:%S') }}</small></div>
+            </div>
+            <div class="col-6">
+                {% if article.tags %}
+                    <div>Tags:</div>
+                    {% for tag in article.tags %}
+                        <span class="badge bg-primary">{{ tag.name }}</span>
+                    {% endfor %}
+                {% endif %}
+            </div>
+        </div>
+
 
     {% else %}
         <h2>You can`t see it. Login</h2>

@@ -30,28 +30,29 @@ def login():
     if current_user.is_authenticated:
         return redirect(url_for('users_app.profile', pk=current_user.id))
 
-    errors = None
+    errors = []
     form = LoginForm(request.form)
     if request.method == 'GET':
         flash('Need a method POST')
         return render_template('auth/login.html', form=form, errors=errors)
 
-    email = form.email.data
-    password = generate_password_hash(form.password.data)
-    if not email:
-        flash("email not passed")
-        return render_template('auth/login.html', form=form)
+    if request.method == 'POST':
+        email = form.email.data
+        password = generate_password_hash(form.password.data)
+        if not email:
+            form.email.errors = ["email not passed"]
+            return render_template('auth/login.html', form=form, errors=errors)
 
-    from blog.models import User
-    _user = User.query.filter_by(email=form.email.data).one_or_none()
+        from blog.models import User
+        _user = User.query.filter_by(email=form.email.data).one_or_none()
 
-    if not _user or check_password_hash(_user.password, password):
-    # if not _user:
-        flash('Check your login details')
-        return redirect(url_for('.login', form=form))
+        if not _user or check_password_hash(_user.password, password):
+        # if not _user:
+            form.password.errors = ['Check your login details']
+            return redirect(url_for('.login', form=form, errors=errors))
 
-    login_user(_user)
-    return redirect(url_for('users_app.profile', pk=_user.id))
+        login_user(_user)
+        return redirect(url_for('users_app.profile', pk=_user.id))
 
 
 @auth_app.route('/logout')

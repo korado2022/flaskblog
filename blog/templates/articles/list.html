@@ -12,9 +12,9 @@
               </tr>
               {% for article in articles %}
                 <tr>
-                    <td>{{ article_id }}</td>
+                    <td>{{ article.id }}</td>
                     <td><a href="{{ url_for('articles_app.details', article_id=article.id) }}">{{ article.title }}</a></td>
-<!--                    <td><a href="{{ url_for('users_app.profile', pk=articles[article_id].author.id) }}">{{ articles[article_id].author.name }}</a></td>-->
+                    <td><a href="{{ url_for('users_app.profile', pk=article.author.id) }}">{{ article.author.user.last_name }}</a></td>
                 </tr>
               {% endfor %}
           </tbody>
