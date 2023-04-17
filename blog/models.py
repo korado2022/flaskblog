@@ -3,6 +3,9 @@ from datetime import datetime
 from flask_login import UserMixin
 from sqlalchemy import Column, Integer, String, Boolean, ForeignKey,Table
 from sqlalchemy.orm import relationship
+from werkzeug.security import check_password_hash
+
+# from blog.extensions import db
 
 from blog.app import db
 
@@ -32,6 +35,11 @@ class User(db.Model, UserMixin):
         self.username = username
         self.password = password
 
+    def check_password(self, password: str) -> bool:
+        return check_password_hash(self.password, password)
+    def __str__(self):
+        return f'{self.user.email} ({self.user.id})'
+
     # def __repr__(self):
     #     return f"<User #{self.id} {self.username!r}>"
 
@@ -42,6 +50,9 @@ class Author(db.Model):
     user_id = db.Column(db.Integer, ForeignKey('users.id'), nullable=False)
     user = relationship('User', back_populates='author')
     article = relationship('Article', back_populates='author')
+
+    def __str__(self):
+        return self.user.email
 
 class Article(db.Model):
     __tablename__ = 'articles'
@@ -56,6 +67,10 @@ class Article(db.Model):
     author = relationship('Author', back_populates='article')
     tags = relationship('Tag', secondary=article_tag_association_table, back_populates='articles')
 
+    def __str__(self):
+        return self.title
+
+
 class Tag(db.Model):
     __tablename__ = 'tags'
 
@@ -64,7 +79,8 @@ class Tag(db.Model):
 
     articles = relationship('Article', secondary=article_tag_association_table, back_populates='tags')
 
-
+    def __str__(self):
+        return self.name
 
 # class Article(db.Model):
 #     __tablename__ = 'articles'
