@@ -1,4 +1,6 @@
 from flask import Flask
+from flask_combo_jsonapi import Api
+
 # from flask_login import LoginManager
 # from flask_sqlalchemy import SQLAlchemy
 
@@ -6,7 +8,8 @@ from flask import Flask
 # from blog.auth.views import auth_app, login_manager
 # from blog.user.views import users_app
 from blog import commands
-from blog.extensions import db, login_manager, migrate, csrf, admin
+
+from blog.extensions import db, login_manager, migrate, csrf, admin, create_api_spec_plugin
 from blog.models import User
 
 # db = SQLAlchemy()
@@ -29,6 +32,7 @@ def create_app() -> Flask:
     register_extensions(app)
     register_blueprints(app)
     register_commands(app)
+    register_api(app)
     return app
 
 
@@ -44,6 +48,31 @@ def register_extensions(app):
     @login_manager.user_loader
     def load_user(user_id):
         return User.query.get(int(user_id))
+
+def register_api(app: Flask):
+    from blog.api.tag import TagList, TagDetail
+    from blog.api.author import AuthorList, AuthorDetail
+    from blog.api.user import UserList, UserDetail
+    from blog.api.article import ArticleList, ArticleDetail
+
+    api = Api(
+        app=app,
+        plugins=[
+            create_api_spec_plugin(app)
+        ]
+    )
+    # api.init_app(app)
+    api.route(TagList, 'tag_list', '/api/tags/', tag='Tag')
+    api.route(TagDetail, 'tag_detail', '/api/tags/<int:id>/', tag='Tag')
+
+    api.route(UserList, 'user_list', '/api/users/', tag='User')
+    api.route(UserDetail, 'user_detail', '/api/users/<int:id>/', tag='User')
+
+    api.route(AuthorList, 'author_list', '/api/authors/', tag='Author')
+    api.route(AuthorDetail, 'author_detail', '/api/authors/<int:id>/', tag='Author')
+
+    api.route(ArticleList, 'article_list', '/api/articles/', tag='Aticle')
+    api.route(ArticleDetail, 'article_detail', '/api/articles/<int:id>/', tag='Aticle')
 
 def register_blueprints(app: Flask):
     # app.register_blueprint(users_app)
@@ -62,6 +91,7 @@ def register_blueprints(app: Flask):
     app.register_blueprint(articles_app)
     app.register_blueprint(authors_app)
     app.register_blueprint(admin_app)
+
     # admin.register_views()
 
 def register_commands(app: Flask):
