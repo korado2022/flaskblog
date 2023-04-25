@@ -1,5 +1,8 @@
+from combojsonapi.event import EventPlugin
+from combojsonapi.permission import PermissionPlugin
 from flask import Flask
 from flask_combo_jsonapi import Api
+from combojsonapi.spec import ApiSpecPlugin
 
 # from flask_login import LoginManager
 # from flask_sqlalchemy import SQLAlchemy
@@ -9,7 +12,7 @@ from flask_combo_jsonapi import Api
 # from blog.user.views import users_app
 from blog import commands
 
-from blog.extensions import db, login_manager, migrate, csrf, admin, create_api_spec_plugin
+from blog.extensions import db, login_manager, migrate, csrf, admin, create_api_spec_plugin, api
 from blog.models import User
 
 # db = SQLAlchemy()
@@ -42,6 +45,21 @@ def register_extensions(app):
     csrf.init_app(app)
     admin.init_app(app)
 
+    api.plugins = [
+        EventPlugin(),
+        PermissionPlugin(),
+        ApiSpecPlugin(
+            app=app,
+            tags={
+                'Tag': 'Tag API',
+                'User': 'User API',
+                'Author': 'Author API',
+                'Article': 'Article API',
+            }
+        ),
+    ]
+    api.init_app(app)
+
     login_manager.login_view = 'auth_app.login'
     login_manager.init_app(app)
 
@@ -55,13 +73,7 @@ def register_api(app: Flask):
     from blog.api.user import UserList, UserDetail
     from blog.api.article import ArticleList, ArticleDetail
 
-    api = Api(
-        app=app,
-        plugins=[
-            create_api_spec_plugin(app)
-        ]
-    )
-    # api.init_app(app)
+
     api.route(TagList, 'tag_list', '/api/tags/', tag='Tag')
     api.route(TagDetail, 'tag_detail', '/api/tags/<int:id>/', tag='Tag')
 

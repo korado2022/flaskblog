@@ -1,5 +1,6 @@
 from sqlite3 import IntegrityError
 
+import requests as requests
 from flask import Blueprint, render_template, request, current_app, redirect, url_for
 from flask_login import login_required, current_user
 from sqlalchemy.orm import joinedload
@@ -114,8 +115,10 @@ articles_app = Blueprint("articles_app", __name__, url_prefix='/articles', stati
 @articles_app.route("/", methods=["GET"])
 @login_required
 def articles_list():
-    articles = Article.query.all()
-    return render_template("articles/list.html", articles=articles)
+    articles: Article = Article.query.all()
+    # call RPC method
+    count_articles = requests.get('http://127.0.0.1:5001/api/articles/event_get_count/').json
+    return render_template("articles/list.html", articles=articles, count_articles=count_articles['count'])
 
 
 @articles_app.route("/create", methods=["GET"])
@@ -164,6 +167,8 @@ def create_article():
 def details(article_id: int):
 
     _article = Article.query.filter_by(id=article_id).options(joinedload(Article.tags)).one_or_none()
+
+
     if _article is None:
         raise NotFound(f"Article #{article_id} doesn't exist!")
 
